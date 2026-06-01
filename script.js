@@ -54,6 +54,7 @@ class ScriptManager {
     constructor() {
         this.scripts = this.loadScripts();
         this.filteredScripts = [...this.scripts];
+        this.editingId = null;
         this.init();
     }
 
@@ -61,6 +62,7 @@ class ScriptManager {
         this.setupEventListeners();
         this.renderScripts();
         this.populateCategories();
+        this.loadTheme();
     }
 
     loadScripts() {
@@ -76,21 +78,42 @@ class ScriptManager {
         // Edit mode button
         document.getElementById('editModeBtn').addEventListener('click', () => this.openEditModal());
 
+        // Add script button
+        document.getElementById('addScriptBtn').addEventListener('click', () => this.openFormModal());
+
         // Search functionality
-        document.getElementById('searchInput').addEventListener('input', (e) => this.filterScripts());
+        document.getElementById('searchInput').addEventListener('input', () => this.filterScripts());
         document.getElementById('categoryFilter').addEventListener('change', () => this.filterScripts());
 
-        // Modal controls
-        document.querySelector('.close').addEventListener('click', () => this.closeEditModal());
+        // Form modal controls
+        document.getElementById('closeFormModal').addEventListener('click', () => this.closeFormModal());
+        document.getElementById('cancelFormBtn').addEventListener('click', () => this.closeFormModal());
+        document.getElementById('scriptForm').addEventListener('submit', (e) => this.saveScript(e));
+
+        // Edit modal controls
+        const closeButtons = document.querySelectorAll('.modal .close');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (e.target.id === 'closeFormModal') {
+                    this.closeFormModal();
+                } else {
+                    this.closeEditModal();
+                }
+            });
+        });
+        
         document.getElementById('cancelBtn').addEventListener('click', () => this.closeEditModal());
         document.getElementById('saveBtn').addEventListener('click', () => this.saveScriptChanges());
 
+        // Theme picker
+        document.getElementById('themeSelect').addEventListener('change', (e) => this.setTheme(e.target.value));
+
         // Close modal on outside click
         window.addEventListener('click', (e) => {
-            const modal = document.getElementById('editModal');
-            if (e.target === modal) {
-                this.closeEditModal();
-            }
+            const formModal = document.getElementById('scriptFormModal');
+            const editModal = document.getElementById('editModal');
+            if (e.target === formModal) this.closeFormModal();
+            if (e.target === editModal) this.closeEditModal();
         });
     }
 
@@ -108,10 +131,16 @@ class ScriptManager {
         }
 
         grid.innerHTML = this.filteredScripts.map(script => `
-            <div class="script-card" onclick="scriptManager.copyToClipboard('${this.escapeHtml(script.content)}', '${script.title}')">
-                <span class="script-category">${script.category}</span>
+            <div class="script-card">
+                <div class="script-card-header">
+                    <span class="script-category">${script.category}</span>
+                    <div class="script-actions">
+                        <button class="btn-edit" onclick="scriptManager.editScript(${script.id})" title="Edit">✏️</button>
+                        <button class="btn-delete" onclick="scriptManager.deleteScript(${script.id})" title="Delete">🗑️</button>
+                    </div>
+                </div>
                 <div class="script-title">${script.title}</div>
-                <div class="script-content">${this.escapeHtml(script.content)}</div>
+                <div class="script-content" onclick="scriptManager.copyToClipboard('${this.escapeHtml(script.content)}', '${script.title}')">${this.escapeHtml(script.content)}</div>
                 <div class="copy-hint">Click to copy</div>
             </div>
         `).join('');
@@ -119,7 +148,7 @@ class ScriptManager {
 
     copyToClipboard(content, title) {
         navigator.clipboard.writeText(content).then(() => {
-            this.showToast(`Copied: ${title}`);
+            this.showToast(`✓ Copied: ${title}`);
         }).catch(err => {
             console.error('Failed to copy:', err);
             this.showToast('Failed to copy', 'error');
@@ -145,11 +174,97 @@ class ScriptManager {
         const select = document.getElementById('categoryFilter');
         
         categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
-            select.appendChild(option);
+            if (!select.querySelector(`option[value="${category}"]`)) {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            }
         });
+    }
+
+    openFormModal(id = null) {
+        const modal = document.getElementById('scriptFormModal');
+        const form = document.getElementById('scriptForm');
+        const title = document.getElementById('formTitle');
+        
+        if (id) {
+            const script = this.scripts.find(s => s.id === id);
+            if (script) {
+                title.textContent = '✏️ Edit Script';
+                document.getElementById('scriptTitle').value = script.title;
+                document.getElementById('scriptCategory').value = script.category;
+                document.getElementById('scriptContent').value = script.content;
+                this.editingId = id;
+            }
+        } else {
+            title.textContent = '➕ Add New Script';
+            form.reset();
+            this.editingId = null;
+        }
+        
+        modal.classList.add('show');
+    }
+
+    closeFormModal() {
+        document.getElementById('scriptFormModal').classList.remove('show');
+        document.getElementById('scriptForm').reset();
+        this.editingId = null;
+    }
+
+    saveScript(e) {
+        e.preventDefault();
+        
+        const title = document.getElementById('scriptTitle').value.trim();
+        const category = document.getElementById('scriptCategory').value.trim();
+        const content = document.getElementById('scriptContent').value.trim();
+
+        if (!title || !category || !content) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        if (this.editingId) {
+            // Update existing script
+            const script = this.scripts.find(s => s.id === this.editingId);
+            if (script) {
+                script.title = title;
+                script.category = category;
+                script.content = content;
+                this.showToast('✓ Script updated!');
+            }
+        } else {
+            // Add new script
+            const newId = Math.max(...this.scripts.map(s => s.id), 0) + 1;
+            this.scripts.push({
+                id: newId,
+                title,
+                category,
+                content
+            });
+            this.showToast('✓ Script added!');
+        }
+
+        this.saveScripts();
+        this.filteredScripts = [...this.scripts];
+        this.renderScripts();
+        this.populateCategories();
+        this.closeFormModal();
+    }
+
+    editScript(id) {
+        this.openFormModal(id);
+    }
+
+    deleteScript(id) {
+        if (confirm('Are you sure you want to delete this script?')) {
+            this.scripts = this.scripts.filter(s => s.id !== id);
+            this.saveScripts();
+            this.filteredScripts = [...this.scripts];
+            this.renderScripts();
+            this.populateCategories();
+            this.showToast('✓ Script deleted!');
+        }
     }
 
     openEditModal() {
@@ -168,7 +283,6 @@ class ScriptManager {
         try {
             const newScripts = JSON.parse(editor.value);
             
-            // Validate scripts structure
             if (!Array.isArray(newScripts)) {
                 throw new Error('Scripts must be an array');
             }
@@ -187,14 +301,24 @@ class ScriptManager {
             this.filteredScripts = [...this.scripts];
             this.renderScripts();
             this.closeEditModal();
-            this.showToast('Scripts updated successfully!');
+            this.showToast('✓ Scripts updated!');
             
-            // Repopulate categories
             document.getElementById('categoryFilter').innerHTML = '<option value="">All Categories</option>';
             this.populateCategories();
         } catch (error) {
             alert('Error parsing scripts:\n\n' + error.message + '\n\nPlease check the JSON format and try again.');
         }
+    }
+
+    setTheme(theme) {
+        document.body.className = `theme-${theme}`;
+        localStorage.setItem('scriptTheme', theme);
+    }
+
+    loadTheme() {
+        const savedTheme = localStorage.getItem('scriptTheme') || 'dark';
+        document.getElementById('themeSelect').value = savedTheme;
+        this.setTheme(savedTheme);
     }
 
     showToast(message, type = 'success') {
@@ -219,9 +343,4 @@ let scriptManager;
 
 document.addEventListener('DOMContentLoaded', () => {
     scriptManager = new ScriptManager();
-
-    // Setup save button in modal
-    document.getElementById('saveBtn').addEventListener('click', () => {
-        scriptManager.saveScriptChanges();
-    });
 });
