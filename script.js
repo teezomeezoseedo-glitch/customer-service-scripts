@@ -14,6 +14,9 @@ class ScriptHub {
         this.isOwner = false;
         this.scripts = [];
         this.filteredScripts = [];
+        this.viewingUser = null;
+        this.viewingScripts = [];
+        this.viewingFilteredScripts = [];
         this.editingId = null;
         this.checkAuth();
     }
@@ -120,15 +123,26 @@ class ScriptHub {
         this.filteredScripts = [];
     }
 
+    getAllUsers() {
+        const users = new Set();
+        for (let key in localStorage) {
+            if (key.startsWith('user_') && key.endsWith('_password')) {
+                const username = key.replace('user_', '').replace('_password', '');
+                users.add(username);
+            }
+        }
+        return Array.from(users).sort();
+    }
+
     init() {
         this.scripts = this.loadScripts();
         this.filteredScripts = [...this.scripts];
         this.setupEventListeners();
         this.updateUserDisplay();
+        this.renderUsersList();
         this.renderScripts();
         this.populateCategories();
         this.loadTheme();
-        this.updateUIPermissions();
     }
 
     loadScripts() {
@@ -150,10 +164,14 @@ class ScriptHub {
         document.getElementById('searchInput').addEventListener('input', () => this.filterScripts());
         document.getElementById('categoryFilter').addEventListener('change', () => this.filterScripts());
 
+        document.getElementById('viewSearchInput').addEventListener('input', () => this.filterViewScripts());
+        document.getElementById('viewCategoryFilter').addEventListener('change', () => this.filterViewScripts());
+
         document.getElementById('closeFormModal').addEventListener('click', () => this.closeFormModal());
         document.getElementById('cancelFormBtn').addEventListener('click', () => this.closeFormModal());
         document.getElementById('scriptForm').addEventListener('submit', (e) => this.saveScript(e));
 
+        document.getElementById('closeViewModal').addEventListener('click', () => this.closeViewModal());
         document.getElementById('closeEditModal').addEventListener('click', () => this.closeEditModal());
         document.getElementById('cancelBtn').addEventListener('click', () => this.closeEditModal());
         document.getElementById('saveBtn').addEventListener('click', () => this.saveScriptChanges());
@@ -162,28 +180,136 @@ class ScriptHub {
 
         window.addEventListener('click', (e) => {
             const formModal = document.getElementById('scriptFormModal');
+            const viewModal = document.getElementById('viewUserModal');
             const editModal = document.getElementById('editModal');
             if (e.target === formModal) this.closeFormModal();
+            if (e.target === viewModal) this.closeViewModal();
             if (e.target === editModal) this.closeEditModal();
         });
     }
 
-    updateUIPermissions() {
-        const addBtn = document.getElementById('addScriptBtn');
-        const editBtn = document.getElementById('editModeBtn');
-        
-        if (this.isOwner) {
-            addBtn.style.display = 'block';
-            editBtn.style.display = 'block';
-        } else {
-            addBtn.style.display = 'none';
-            editBtn.style.display = 'none';
-        }
-    }
-
     updateUserDisplay() {
         const userEl = document.getElementById('currentUser');
-        userEl.textContent = `${this.currentUser}${this.isOwner ? ' (Owner)' : ' (Viewer)'}`;
+        userEl.textContent = `${this.currentUser} (Owner)`;
+    }
+
+    renderUsersList() {
+        const usersList = document.getElementById('usersList');
+        const allUsers = this.getAllUsers();
+        
+        usersList.innerHTML = allUsers.map(user => {
+            const scriptCount = this.getUserScriptCount(user);
+            return `
+                <div class="user-profile">
+                    <div class="user-profile-info">
+                        <div class="user-profile-name">${user}</div>
+                        <div class="user-profile-meta">${scriptCount} script${scriptCount !== 1 ? 's' : ''}</div>
+                    </div>
+                    <button class="btn btn-view" onclick="scriptHub.viewUserScripts('${user}')">View Scripts</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    getUserScriptCount(username) {
+        const key = `scripts_${username}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            try {
+                return JSON.parse(stored).length;
+            } catch (e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    getUserScripts(username) {
+        const key = `scripts_${username}`;
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    viewUserScripts(username) {
+        this.viewingUser = username;
+        this.viewingScripts = this.getUserScripts(username);
+        this.viewingFilteredScripts = [...this.viewingScripts];
+        
+        document.getElementById('viewUserTitle').textContent = `${username}'s Scripts`;
+        document.getElementById('viewUserModal').classList.add('show');
+        
+        this.populateViewCategories();
+        this.renderViewScripts();
+    }
+
+    closeViewModal() {
+        document.getElementById('viewUserModal').classList.remove('show');
+        this.viewingUser = null;
+        this.viewingScripts = [];
+        this.viewingFilteredScripts = [];
+    }
+
+    populateViewCategories() {
+        const categories = [...new Set(this.viewingScripts.map(s => s.category))].sort();
+        const select = document.getElementById('viewCategoryFilter');
+        
+        select.innerHTML = '<option value="">All Categories</option>';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+        });
+    }
+
+    renderViewScripts() {
+        const grid = document.getElementById('viewScriptsGrid');
+        
+        if (this.viewingFilteredScripts.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                    <p>No scripts found</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = this.viewingFilteredScripts.map(script => `
+            <div class="script-card" data-id="${script.id}">
+                <div class="script-card-header">
+                    <span class="script-category">${script.category}</span>
+                </div>
+                <div class="script-title">${script.title}</div>
+                <div class="script-content" id="vcontent-${script.id}">${this.escapeHtml(script.content)}</div>
+                <button class="btn-copy" onclick="scriptHub.copyViewScript(${script.id}, '${script.title}')">Copy</button>
+            </div>
+        `).join('');
+    }
+
+    filterViewScripts() {
+        const searchTerm = document.getElementById('viewSearchInput').value.toLowerCase();
+        const category = document.getElementById('viewCategoryFilter').value;
+
+        this.viewingFilteredScripts = this.viewingScripts.filter(script => {
+            const matchesSearch = script.title.toLowerCase().includes(searchTerm) ||
+                                script.content.toLowerCase().includes(searchTerm);
+            const matchesCategory = !category || script.category === category;
+            return matchesSearch && matchesCategory;
+        });
+
+        this.renderViewScripts();
+    }
+
+    copyViewScript(id, title) {
+        const contentEl = document.getElementById(`vcontent-${id}`);
+        const text = contentEl.innerText;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            this.showToast(`✓ Copied: ${title}`);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            this.showToast('Failed to copy', 'error');
+        });
     }
 
     renderScripts() {
@@ -193,7 +319,7 @@ class ScriptHub {
             grid.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-secondary);">
                     <h2>No scripts found</h2>
-                    <p>${this.isOwner ? 'Click + Add Script to create one' : 'No scripts to display'}</p>
+                    <p>Click + Add Script to create one</p>
                 </div>
             `;
             return;
@@ -203,12 +329,10 @@ class ScriptHub {
             <div class="script-card" data-id="${script.id}">
                 <div class="script-card-header">
                     <span class="script-category">${script.category}</span>
-                    ${this.isOwner ? `
-                        <div class="script-actions">
-                            <button class="btn-edit" onclick="scriptHub.editScript(${script.id})" title="Edit">✎</button>
-                            <button class="btn-delete" onclick="scriptHub.deleteScript(${script.id})" title="Delete">✕</button>
-                        </div>
-                    ` : ''}
+                    <div class="script-actions">
+                        <button class="btn-edit" onclick="scriptHub.editScript(${script.id})" title="Edit">✎</button>
+                        <button class="btn-delete" onclick="scriptHub.deleteScript(${script.id})" title="Delete">✕</button>
+                    </div>
                 </div>
                 <div class="script-title">${script.title}</div>
                 <div class="script-content" id="content-${script.id}">${this.escapeHtml(script.content)}</div>
@@ -321,18 +445,10 @@ class ScriptHub {
     }
 
     editScript(id) {
-        if (!this.isOwner) {
-            alert('Only owner can edit scripts');
-            return;
-        }
         this.openFormModal(id);
     }
 
     deleteScript(id) {
-        if (!this.isOwner) {
-            alert('Only owner can delete scripts');
-            return;
-        }
         if (confirm('Delete this script?')) {
             this.scripts = this.scripts.filter(s => s.id !== id);
             this.saveScripts();

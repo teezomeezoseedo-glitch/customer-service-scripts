@@ -44,25 +44,37 @@
             <p>Professional Script Management</p>
         </header>
 
-        <div class="controls">
-            <input 
-                type="text" 
-                id="searchInput" 
-                class="search-box" 
-                placeholder="Search scripts..."
-            >
-            <select id="categoryFilter" class="category-filter">
-                <option value="">All Categories</option>
-            </select>
-            <button class="btn-add-script" id="addScriptBtn" style="display:none;">+ Add Script</button>
+        <!-- Users Section -->
+        <div class="users-section">
+            <h3>Browse Users & Scripts</h3>
+            <div class="users-list" id="usersList">
+                <!-- User profiles will load here -->
+            </div>
         </div>
 
-        <div class="scripts-grid" id="scriptsGrid">
-            <!-- Scripts will be loaded here -->
-        </div>
+        <!-- My Scripts Section -->
+        <div class="my-scripts-section">
+            <div class="section-header">
+                <h3>My Scripts</h3>
+                <button class="btn-add-script" id="addScriptBtn">+ Add Script</button>
+                <button class="btn-edit-mode" id="editModeBtn">JSON Editor</button>
+            </div>
 
-        <div class="editor-section">
-            <button class="btn-edit-mode" id="editModeBtn" style="display:none;">JSON Editor</button>
+            <div class="controls">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-box" 
+                    placeholder="Search scripts..."
+                >
+                <select id="categoryFilter" class="category-filter">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <div class="scripts-grid" id="scriptsGrid">
+                <!-- Scripts will be loaded here -->
+            </div>
         </div>
     </div>
 
@@ -89,6 +101,30 @@
                     <button type="button" class="btn btn-cancel" id="cancelFormBtn">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- View User Scripts Modal -->
+    <div id="viewUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeViewModal">&times;</span>
+            <h2 id="viewUserTitle">User Scripts</h2>
+            
+            <div class="view-controls">
+                <input 
+                    type="text" 
+                    id="viewSearchInput" 
+                    class="search-box" 
+                    placeholder="Search scripts..."
+                >
+                <select id="viewCategoryFilter" class="category-filter">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            
+            <div class="view-scripts-grid" id="viewScriptsGrid">
+                <!-- Scripts will be loaded here -->
+            </div>
         </div>
     </div>
 

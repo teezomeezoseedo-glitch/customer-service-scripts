@@ -228,6 +228,96 @@ body {
     letter-spacing: 0.3px;
 }
 
+/* Users Section */
+.users-section {
+    margin-bottom: 50px;
+    background: var(--bg-card);
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.users-section h3 {
+    font-size: 1.3em;
+    margin-bottom: 20px;
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
+.users-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.user-profile {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.user-profile:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-hover);
+    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.1);
+}
+
+.user-profile-info {
+    flex: 1;
+}
+
+.user-profile-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.user-profile-meta {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+.btn-view {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.btn-view:hover {
+    background: var(--accent-color);
+    color: var(--bg-dark);
+}
+
+/* My Scripts Section */
+.my-scripts-section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.section-header h3 {
+    font-size: 1.3em;
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
 .controls {
     display: flex;
     gap: 12px;
@@ -265,22 +355,27 @@ body {
     min-width: 180px;
 }
 
-.btn-add-script {
+.btn-add-script,
+.btn-edit-mode {
     background: var(--primary-color);
     color: white;
     border: none;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
+    box-shadow: none;
     transition: all 0.3s ease;
 }
 
-.btn-add-script:hover {
+.btn-add-script:hover,
+.btn-edit-mode:hover {
     background: var(--accent-color);
+    color: var(--bg-dark);
     box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2);
 }
 
-.scripts-grid {
+.scripts-grid,
+.view-scripts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 16px;
@@ -389,31 +484,8 @@ body {
 
 .btn-copy:hover {
     background: var(--accent-color);
+    color: var(--bg-dark);
     box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2);
-}
-
-.editor-section {
-    text-align: center;
-    margin: 40px 0;
-}
-
-.btn-edit-mode {
-    padding: 10px 24px;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.95em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.btn-edit-mode:hover {
-    background: var(--accent-color);
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
 }
 
 .modal {
@@ -491,6 +563,25 @@ body {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+.view-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.view-controls .search-box,
+.view-controls .category-filter {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+.view-controls .search-box {
+    flex: 1;
 }
 
 .form-group {
@@ -624,17 +715,22 @@ body {
         justify-content: center;
     }
 
-    .scripts-grid {
+    .scripts-grid,
+    .view-scripts-grid,
+    .users-list {
         grid-template-columns: 1fr;
     }
 
-    .controls {
+    .controls,
+    .view-controls,
+    .section-header {
         flex-direction: column;
     }
 
     .search-box,
     .category-filter,
-    .btn-add-script {
+    .btn-add-script,
+    .btn-edit-mode {
         width: 100%;
     }
 
