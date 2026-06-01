@@ -9,7 +9,21 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>📞 Customer Service Scripts</h1>
+            <div class="header-top">
+                <h1>📞 Customer Service Scripts</h1>
+                <div class="theme-picker">
+                    <label for="themeSelect">🎨 Theme:</label>
+                    <select id="themeSelect" class="theme-select">
+                        <option value="dark">Dark Blue</option>
+                        <option value="purple">Purple</option>
+                        <option value="green">Green</option>
+                        <option value="orange">Orange</option>
+                        <option value="red">Red</option>
+                        <option value="pink">Pink</option>
+                        <option value="cyan">Cyan</option>
+                    </select>
+                </div>
+            </div>
             <p>Click any card to copy the script to clipboard</p>
         </header>
 
@@ -23,6 +37,7 @@
             <select id="categoryFilter" class="category-filter">
                 <option value="">All Categories</option>
             </select>
+            <button class="btn-add-script" id="addScriptBtn">➕ Add Script</button>
         </div>
 
         <div class="scripts-grid" id="scriptsGrid">
@@ -30,15 +45,41 @@
         </div>
 
         <div class="editor-section">
-            <button class="btn-edit-mode" id="editModeBtn">✏️ Edit Scripts</button>
+            <button class="btn-edit-mode" id="editModeBtn">✏️ Edit Scripts (JSON)</button>
         </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Add/Edit Script Modal -->
+    <div id="scriptFormModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeFormModal">&times;</span>
+            <h2 id="formTitle">Add New Script</h2>
+            <form id="scriptForm">
+                <div class="form-group">
+                    <label for="scriptTitle">Title:</label>
+                    <input type="text" id="scriptTitle" placeholder="e.g., Welcome Call" required>
+                </div>
+                <div class="form-group">
+                    <label for="scriptCategory">Category:</label>
+                    <input type="text" id="scriptCategory" placeholder="e.g., Greeting" required>
+                </div>
+                <div class="form-group">
+                    <label for="scriptContent">Content:</label>
+                    <textarea id="scriptContent" placeholder="Enter your script here..." rows="6" required></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-save">Save Script</button>
+                    <button type="button" class="btn btn-cancel" id="cancelFormBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Modal (JSON) -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Edit Scripts</h2>
+            <h2>Edit Scripts (JSON)</h2>
             <textarea id="scriptsEditor" class="scripts-editor"></textarea>
             <div class="modal-buttons">
                 <button class="btn btn-save" id="saveBtn">Save Changes</button>
