@@ -2,56 +2,27 @@
 const defaultScripts = [
     {
         id: 1,
-        category: "Greeting",
-        title: "Welcome Call",
-        content: "Hello! Thank you for contacting us. How can I assist you today?"
+        category: "Jokes",
+        title: "Why so serious?",
+        content: "Why did the developer go broke?\nBecause he used up all his cache!"
     },
     {
         id: 2,
-        category: "Greeting",
-        title: "Follow-up Call",
-        content: "Hi there! I'm following up on your recent inquiry. Do you have any questions for me?"
+        category: "Tips",
+        title: "Pro Tip",
+        content: "Always save your work!\nYour future self will thank you."
     },
     {
         id: 3,
-        category: "Issue Resolution",
-        title: "Troubleshooting",
-        content: "I understand you're experiencing an issue. Let me gather some information to better help you:\n\n1. When did this problem start?\n2. Have you tried any troubleshooting steps?\n3. What error message are you seeing?"
-    },
-    {
-        id: 4,
-        category: "Issue Resolution",
-        title: "Problem Escalation",
-        content: "I appreciate you providing those details. This issue needs specialized attention. Let me escalate this to our technical team who will follow up with you within 24 hours."
-    },
-    {
-        id: 5,
-        category: "Billing",
-        title: "Payment Inquiry",
-        content: "Thank you for your interest. Could you please provide:\n\n- Your account number\n- The type of billing question\n- Your preferred contact method\n\nI'll be happy to assist!"
-    },
-    {
-        id: 6,
-        category: "Billing",
-        title: "Invoice Explanation",
-        content: "Looking at your invoice from [DATE], I can see charges for [SERVICES]. Let me break this down for you..."
-    },
-    {
-        id: 7,
-        category: "Closing",
-        title: "Resolution Confirmation",
-        content: "Perfect! So to confirm, we've resolved [ISSUE]. Is there anything else I can help you with today?"
-    },
-    {
-        id: 8,
-        category: "Closing",
-        title: "Thank You",
-        content: "Thank you for choosing us! We appreciate your business. If you need anything else, please don't hesitate to reach out. Have a great day!"
+        category: "Memes",
+        title: "Classic",
+        content: "It works on my machine!\n- Every developer ever"
     }
 ];
 
-class ScriptManager {
+class ScriptHub {
     constructor() {
+        this.currentUser = this.loadUser();
         this.scripts = this.loadScripts();
         this.filteredScripts = [...this.scripts];
         this.editingId = null;
@@ -60,61 +31,117 @@ class ScriptManager {
 
     init() {
         this.setupEventListeners();
+        this.updateUserDisplay();
         this.renderScripts();
         this.populateCategories();
         this.loadTheme();
     }
 
+    loadUser() {
+        return localStorage.getItem('currentUser') || 'Guest';
+    }
+
+    saveUser(username) {
+        this.currentUser = username;
+        localStorage.setItem('currentUser', username);
+        this.updateUserDisplay();
+    }
+
     loadScripts() {
-        const stored = localStorage.getItem('customerServiceScripts');
+        const key = `scripts_${this.currentUser}`;
+        const stored = localStorage.getItem(key);
         return stored ? JSON.parse(stored) : defaultScripts;
     }
 
     saveScripts() {
-        localStorage.setItem('customerServiceScripts', JSON.stringify(this.scripts));
+        const key = `scripts_${this.currentUser}`;
+        localStorage.setItem(key, JSON.stringify(this.scripts));
+    }
+
+    getAllUsers() {
+        const users = new Set();
+        for (let key in localStorage) {
+            if (key.startsWith('scripts_')) {
+                users.add(key.replace('scripts_', ''));
+            }
+        }
+        users.add(this.currentUser);
+        return Array.from(users).sort();
     }
 
     setupEventListeners() {
-        // Edit mode button
         document.getElementById('editModeBtn').addEventListener('click', () => this.openEditModal());
-
-        // Add script button
         document.getElementById('addScriptBtn').addEventListener('click', () => this.openFormModal());
+        document.getElementById('userBtn').addEventListener('click', () => this.openUserModal());
+        document.getElementById('closeUserModal').addEventListener('click', () => this.closeUserModal());
+        document.getElementById('createUserBtn').addEventListener('click', () => this.createUser());
 
-        // Search functionality
         document.getElementById('searchInput').addEventListener('input', () => this.filterScripts());
         document.getElementById('categoryFilter').addEventListener('change', () => this.filterScripts());
 
-        // Form modal controls
         document.getElementById('closeFormModal').addEventListener('click', () => this.closeFormModal());
         document.getElementById('cancelFormBtn').addEventListener('click', () => this.closeFormModal());
         document.getElementById('scriptForm').addEventListener('submit', (e) => this.saveScript(e));
 
-        // Edit modal controls
-        const closeButtons = document.querySelectorAll('.modal .close');
-        closeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                if (e.target.id === 'closeFormModal') {
-                    this.closeFormModal();
-                } else {
-                    this.closeEditModal();
-                }
-            });
-        });
-        
+        document.getElementById('closeEditModal').addEventListener('click', () => this.closeEditModal());
         document.getElementById('cancelBtn').addEventListener('click', () => this.closeEditModal());
         document.getElementById('saveBtn').addEventListener('click', () => this.saveScriptChanges());
 
-        // Theme picker
         document.getElementById('themeSelect').addEventListener('change', (e) => this.setTheme(e.target.value));
 
-        // Close modal on outside click
         window.addEventListener('click', (e) => {
+            const userModal = document.getElementById('userModal');
             const formModal = document.getElementById('scriptFormModal');
             const editModal = document.getElementById('editModal');
+            if (e.target === userModal) this.closeUserModal();
             if (e.target === formModal) this.closeFormModal();
             if (e.target === editModal) this.closeEditModal();
         });
+    }
+
+    updateUserDisplay() {
+        document.getElementById('currentUser').textContent = `👤 ${this.currentUser}`;
+    }
+
+    openUserModal() {
+        const modal = document.getElementById('userModal');
+        const userList = document.getElementById('userList');
+        const users = this.getAllUsers();
+        
+        userList.innerHTML = users.map(user => `
+            <button class="user-item ${user === this.currentUser ? 'active' : ''}" onclick="scriptHub.switchUser('${user}')">\n                ${user} ${user === this.currentUser ? '✓' : ''}
+            </button>
+        `).join('');
+        
+        modal.classList.add('show');
+    }
+
+    closeUserModal() {
+        document.getElementById('userModal').classList.remove('show');
+    }
+
+    switchUser(username) {
+        this.saveUser(username);
+        this.scripts = this.loadScripts();
+        this.filteredScripts = [...this.scripts];
+        this.renderScripts();
+        this.populateCategories();
+        this.closeUserModal();
+        this.showToast(`✓ Switched to ${username}`);
+    }
+
+    createUser() {
+        const username = document.getElementById('newUsername').value.trim();
+        if (!username) {
+            alert('Please enter a username');
+            return;
+        }
+        if (this.getAllUsers().includes(username)) {
+            alert('User already exists');
+            return;
+        }
+        this.switchUser(username);
+        document.getElementById('newUsername').value = '';
     }
 
     renderScripts() {
@@ -123,31 +150,34 @@ class ScriptManager {
         if (this.filteredScripts.length === 0) {
             grid.innerHTML = `
                 <div style="grid-column: 1 / -1;" class="empty-state">
-                    <h2>No scripts found</h2>
-                    <p>Try adjusting your search or filters</p>
+                    <h2>No scripts yet</h2>
+                    <p>Click ➕ Add Script to get started!</p>
                 </div>
             `;
             return;
         }
 
         grid.innerHTML = this.filteredScripts.map(script => `
-            <div class="script-card">
+            <div class="script-card" data-id="${script.id}">
                 <div class="script-card-header">
                     <span class="script-category">${script.category}</span>
                     <div class="script-actions">
-                        <button class="btn-edit" onclick="scriptManager.editScript(${script.id})" title="Edit">✏️</button>
-                        <button class="btn-delete" onclick="scriptManager.deleteScript(${script.id})" title="Delete">🗑️</button>
+                        <button class="btn-edit" onclick="scriptHub.editScript(${script.id})" title="Edit">✏️</button>
+                        <button class="btn-delete" onclick="scriptHub.deleteScript(${script.id})" title="Delete">🗑️</button>
                     </div>
                 </div>
                 <div class="script-title">${script.title}</div>
-                <div class="script-content" onclick="scriptManager.copyToClipboard('${this.escapeHtml(script.content)}', '${script.title}')">${this.escapeHtml(script.content)}</div>
-                <div class="copy-hint">Click to copy</div>
+                <div class="script-content" id="content-${script.id}">${this.escapeHtml(script.content)}</div>
+                <button class="btn-copy" onclick="scriptHub.copyToClipboard(${script.id}, '${script.title}')">📋 Copy</button>
             </div>
         `).join('');
     }
 
-    copyToClipboard(content, title) {
-        navigator.clipboard.writeText(content).then(() => {
+    copyToClipboard(id, title) {
+        const contentEl = document.getElementById(`content-${id}`);
+        const text = contentEl.innerText;
+        
+        navigator.clipboard.writeText(text).then(() => {
             this.showToast(`✓ Copied: ${title}`);
         }).catch(err => {
             console.error('Failed to copy:', err);
@@ -172,15 +202,16 @@ class ScriptManager {
     populateCategories() {
         const categories = [...new Set(this.scripts.map(s => s.category))].sort();
         const select = document.getElementById('categoryFilter');
+        const currentValue = select.value;
         
+        select.innerHTML = '<option value="">All Categories</option>';
         categories.forEach(category => {
-            if (!select.querySelector(`option[value="${category}"]`)) {
-                const option = document.createElement('option');
-                option.value = category;
-                option.textContent = category;
-                select.appendChild(option);
-            }
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
         });
+        select.value = currentValue;
     }
 
     openFormModal(id = null) {
@@ -225,7 +256,6 @@ class ScriptManager {
         }
 
         if (this.editingId) {
-            // Update existing script
             const script = this.scripts.find(s => s.id === this.editingId);
             if (script) {
                 script.title = title;
@@ -234,14 +264,8 @@ class ScriptManager {
                 this.showToast('✓ Script updated!');
             }
         } else {
-            // Add new script
             const newId = Math.max(...this.scripts.map(s => s.id), 0) + 1;
-            this.scripts.push({
-                id: newId,
-                title,
-                category,
-                content
-            });
+            this.scripts.push({ id: newId, title, category, content });
             this.showToast('✓ Script added!');
         }
 
@@ -257,7 +281,7 @@ class ScriptManager {
     }
 
     deleteScript(id) {
-        if (confirm('Are you sure you want to delete this script?')) {
+        if (confirm('Delete this script?')) {
             this.scripts = this.scripts.filter(s => s.id !== id);
             this.saveScripts();
             this.filteredScripts = [...this.scripts];
@@ -284,16 +308,14 @@ class ScriptManager {
             const newScripts = JSON.parse(editor.value);
             
             if (!Array.isArray(newScripts)) {
-                throw new Error('Scripts must be an array');
+                throw new Error('Must be an array');
             }
 
             newScripts.forEach((script, index) => {
                 if (!script.title || !script.content || !script.category) {
-                    throw new Error(`Script ${index + 1} is missing required fields (title, content, category)`);
+                    throw new Error(`Script ${index + 1} missing fields`);
                 }
-                if (!script.id) {
-                    script.id = Math.max(...this.scripts.map(s => s.id), 0) + 1;
-                }
+                if (!script.id) script.id = Math.max(...this.scripts.map(s => s.id), 0) + 1;
             });
 
             this.scripts = newScripts;
@@ -302,11 +324,9 @@ class ScriptManager {
             this.renderScripts();
             this.closeEditModal();
             this.showToast('✓ Scripts updated!');
-            
-            document.getElementById('categoryFilter').innerHTML = '<option value="">All Categories</option>';
             this.populateCategories();
         } catch (error) {
-            alert('Error parsing scripts:\n\n' + error.message + '\n\nPlease check the JSON format and try again.');
+            alert('Error: ' + error.message);
         }
     }
 
@@ -316,7 +336,7 @@ class ScriptManager {
     }
 
     loadTheme() {
-        const savedTheme = localStorage.getItem('scriptTheme') || 'dark';
+        const savedTheme = localStorage.getItem('scriptTheme') || 'neon-blue';
         document.getElementById('themeSelect').value = savedTheme;
         this.setTheme(savedTheme);
     }
@@ -325,10 +345,7 @@ class ScriptManager {
         const toast = document.getElementById('toast');
         toast.textContent = message;
         toast.className = `toast show ${type}`;
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     escapeHtml(text) {
@@ -338,9 +355,7 @@ class ScriptManager {
     }
 }
 
-// Initialize the app
-let scriptManager;
-
+let scriptHub;
 document.addEventListener('DOMContentLoaded', () => {
-    scriptManager = new ScriptManager();
+    scriptHub = new ScriptHub();
 });

@@ -3,28 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Service Scripts</title>
+    <title>Script Hub</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- User Panel -->
+    <div class="user-panel">
+        <div class="user-info">
+            <span id="currentUser">Guest</span>
+            <button id="userBtn" class="user-btn">👤 Switch User</button>
+        </div>
+    </div>
+
     <div class="container">
         <header class="header">
             <div class="header-top">
-                <h1>📞 Customer Service Scripts</h1>
+                <h1>🎮 Script Hub</h1>
                 <div class="theme-picker">
                     <label for="themeSelect">🎨 Theme:</label>
                     <select id="themeSelect" class="theme-select">
-                        <option value="dark">Dark Blue</option>
-                        <option value="purple">Purple</option>
-                        <option value="green">Green</option>
-                        <option value="orange">Orange</option>
-                        <option value="red">Red</option>
-                        <option value="pink">Pink</option>
-                        <option value="cyan">Cyan</option>
+                        <option value="neon-blue">Neon Blue</option>
+                        <option value="neon-pink">Neon Pink</option>
+                        <option value="neon-green">Neon Green</option>
+                        <option value="neon-purple">Neon Purple</option>
+                        <option value="neon-orange">Neon Orange</option>
+                        <option value="cyberpunk">Cyberpunk</option>
+                        <option value="matrix">Matrix</option>
                     </select>
                 </div>
             </div>
-            <p>Click any card to copy the script to clipboard</p>
+            <p>Your personal script collection</p>
         </header>
 
         <div class="controls">
@@ -45,7 +53,23 @@
         </div>
 
         <div class="editor-section">
-            <button class="btn-edit-mode" id="editModeBtn">✏️ Edit Scripts (JSON)</button>
+            <button class="btn-edit-mode" id="editModeBtn">⚙️ JSON Editor</button>
+        </div>
+    </div>
+
+    <!-- User Switch Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeUserModal">&times;</span>
+            <h2>👤 Switch User</h2>
+            <div class="user-list" id="userList"></div>
+            <div class="form-group">
+                <label for="newUsername">Create New User:</label>
+                <div class="username-input">
+                    <input type="text" id="newUsername" placeholder="Enter username...">
+                    <button class="btn btn-save" id="createUserBtn">Create</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -57,11 +81,11 @@
             <form id="scriptForm">
                 <div class="form-group">
                     <label for="scriptTitle">Title:</label>
-                    <input type="text" id="scriptTitle" placeholder="e.g., Welcome Call" required>
+                    <input type="text" id="scriptTitle" placeholder="e.g., Funny Joke" required>
                 </div>
                 <div class="form-group">
                     <label for="scriptCategory">Category:</label>
-                    <input type="text" id="scriptCategory" placeholder="e.g., Greeting" required>
+                    <input type="text" id="scriptCategory" placeholder="e.g., Jokes" required>
                 </div>
                 <div class="form-group">
                     <label for="scriptContent">Content:</label>
@@ -78,8 +102,8 @@
     <!-- Edit Modal (JSON) -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Edit Scripts (JSON)</h2>
+            <span class="close" id="closeEditModal">&times;</span>
+            <h2>⚙️ JSON Editor</h2>
             <textarea id="scriptsEditor" class="scripts-editor"></textarea>
             <div class="modal-buttons">
                 <button class="btn btn-save" id="saveBtn">Save Changes</button>
