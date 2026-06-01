@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Service Scripts</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📞 Customer Service Scripts</h1>
+            <p>Click any card to copy the script to clipboard</p>
+        </header>
+
+        <div class="controls">
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="search-box" 
+                placeholder="Search scripts..."
+            >
+            <select id="categoryFilter" class="category-filter">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+
+        <div class="scripts-grid" id="scriptsGrid">
+            <!-- Scripts will be loaded here -->
+        </div>
+
+        <div class="editor-section">
+            <button class="btn-edit-mode" id="editModeBtn">✏️ Edit Scripts</button>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Scripts</h2>
+            <textarea id="scriptsEditor" class="scripts-editor"></textarea>
+            <div class="modal-buttons">
+                <button class="btn btn-save" id="saveBtn">Save Changes</button>
+                <button class="btn btn-cancel" id="cancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
