@@ -7,32 +7,41 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content auth-modal">
+            <h2>Script Hub</h2>
+            <div id="authContent"></div>
+        </div>
+    </div>
+
     <!-- User Panel -->
     <div class="user-panel">
         <div class="user-info">
-            <span id="currentUser">Guest</span>
-            <button id="userBtn" class="user-btn">👤 Switch User</button>
+            <span id="currentUser">Loading...</span>
+            <button id="logoutBtn" class="user-btn">Sign Out</button>
         </div>
     </div>
 
     <div class="container">
         <header class="header">
             <div class="header-top">
-                <h1>🎮 Script Hub</h1>
+                <h1>Script Manager</h1>
                 <div class="theme-picker">
-                    <label for="themeSelect">🎨 Theme:</label>
+                    <label for="themeSelect">Theme:</label>
                     <select id="themeSelect" class="theme-select">
-                        <option value="neon-blue">Neon Blue</option>
-                        <option value="neon-pink">Neon Pink</option>
-                        <option value="neon-green">Neon Green</option>
-                        <option value="neon-purple">Neon Purple</option>
-                        <option value="neon-orange">Neon Orange</option>
-                        <option value="cyberpunk">Cyberpunk</option>
-                        <option value="matrix">Matrix</option>
+                        <option value="dark-pro">Dark Pro</option>
+                        <option value="light-pro">Light Pro</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="forest">Forest</option>
+                        <option value="midnight">Midnight</option>
+                        <option value="slate">Slate</option>
+                        <option value="neon-pro-blue">Neon Blue Pro</option>
+                        <option value="neon-pro-green">Neon Green Pro</option>
                     </select>
                 </div>
             </div>
-            <p>Your personal script collection</p>
+            <p>Professional Script Management</p>
         </header>
 
         <div class="controls">
@@ -45,7 +54,7 @@
             <select id="categoryFilter" class="category-filter">
                 <option value="">All Categories</option>
             </select>
-            <button class="btn-add-script" id="addScriptBtn">➕ Add Script</button>
+            <button class="btn-add-script" id="addScriptBtn" style="display:none;">+ Add Script</button>
         </div>
 
         <div class="scripts-grid" id="scriptsGrid">
@@ -53,23 +62,7 @@
         </div>
 
         <div class="editor-section">
-            <button class="btn-edit-mode" id="editModeBtn">⚙️ JSON Editor</button>
-        </div>
-    </div>
-
-    <!-- User Switch Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="closeUserModal">&times;</span>
-            <h2>👤 Switch User</h2>
-            <div class="user-list" id="userList"></div>
-            <div class="form-group">
-                <label for="newUsername">Create New User:</label>
-                <div class="username-input">
-                    <input type="text" id="newUsername" placeholder="Enter username...">
-                    <button class="btn btn-save" id="createUserBtn">Create</button>
-                </div>
-            </div>
+            <button class="btn-edit-mode" id="editModeBtn" style="display:none;">JSON Editor</button>
         </div>
     </div>
 
@@ -77,22 +70,22 @@
     <div id="scriptFormModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeFormModal">&times;</span>
-            <h2 id="formTitle">Add New Script</h2>
+            <h2 id="formTitle">Add Script</h2>
             <form id="scriptForm">
                 <div class="form-group">
                     <label for="scriptTitle">Title:</label>
-                    <input type="text" id="scriptTitle" placeholder="e.g., Funny Joke" required>
+                    <input type="text" id="scriptTitle" placeholder="Enter title" required>
                 </div>
                 <div class="form-group">
                     <label for="scriptCategory">Category:</label>
-                    <input type="text" id="scriptCategory" placeholder="e.g., Jokes" required>
+                    <input type="text" id="scriptCategory" placeholder="Enter category" required>
                 </div>
                 <div class="form-group">
                     <label for="scriptContent">Content:</label>
-                    <textarea id="scriptContent" placeholder="Enter your script here..." rows="6" required></textarea>
+                    <textarea id="scriptContent" placeholder="Enter content..." rows="8" required></textarea>
                 </div>
                 <div class="modal-buttons">
-                    <button type="submit" class="btn btn-save">Save Script</button>
+                    <button type="submit" class="btn btn-save">Save</button>
                     <button type="button" class="btn btn-cancel" id="cancelFormBtn">Cancel</button>
                 </div>
             </form>
@@ -103,10 +96,10 @@
     <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeEditModal">&times;</span>
-            <h2>⚙️ JSON Editor</h2>
+            <h2>JSON Editor</h2>
             <textarea id="scriptsEditor" class="scripts-editor"></textarea>
             <div class="modal-buttons">
-                <button class="btn btn-save" id="saveBtn">Save Changes</button>
+                <button class="btn btn-save" id="saveBtn">Save</button>
                 <button class="btn btn-cancel" id="cancelBtn">Cancel</button>
             </div>
         </div>

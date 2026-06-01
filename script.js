@@ -2,55 +2,139 @@
 const defaultScripts = [
     {
         id: 1,
-        category: "Jokes",
-        title: "Why so serious?",
-        content: "Why did the developer go broke?\nBecause he used up all his cache!"
-    },
-    {
-        id: 2,
-        category: "Tips",
-        title: "Pro Tip",
-        content: "Always save your work!\nYour future self will thank you."
-    },
-    {
-        id: 3,
-        category: "Memes",
-        title: "Classic",
-        content: "It works on my machine!\n- Every developer ever"
+        category: "Templates",
+        title: "Getting Started",
+        content: "Welcome to Script Manager. Create your first script to get started."
     }
 ];
 
 class ScriptHub {
     constructor() {
-        this.currentUser = this.loadUser();
-        this.scripts = this.loadScripts();
-        this.filteredScripts = [...this.scripts];
+        this.currentUser = null;
+        this.isOwner = false;
+        this.scripts = [];
+        this.filteredScripts = [];
         this.editingId = null;
+        this.checkAuth();
+    }
+
+    checkAuth() {
+        const user = localStorage.getItem('currentUser');
+        const userPassword = localStorage.getItem('userPassword');
+        
+        if (user && userPassword) {
+            this.currentUser = user;
+            this.isOwner = true;
+            this.init();
+        } else {
+            this.showAuthScreen();
+        }
+    }
+
+    showAuthScreen() {
+        const authModal = document.getElementById('authModal');
+        const authContent = document.getElementById('authContent');
+        
+        authContent.innerHTML = `
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div style="flex: 1;">
+                    <h3>Sign In</h3>
+                    <input type="text" id="loginUsername" placeholder="Username" class="auth-input">
+                    <input type="password" id="loginPassword" placeholder="Password" class="auth-input">
+                    <button id="loginBtn" class="btn btn-save" style="width: 100%; margin-top: 10px;">Sign In</button>
+                </div>
+                <div style="flex: 1;">
+                    <h3>Create Account</h3>
+                    <input type="text" id="signupUsername" placeholder="Username" class="auth-input">
+                    <input type="password" id="signupPassword" placeholder="Password" class="auth-input">
+                    <input type="password" id="signupConfirm" placeholder="Confirm Password" class="auth-input">
+                    <button id="signupBtn" class="btn btn-save" style="width: 100%; margin-top: 10px;">Create</button>
+                </div>
+            </div>
+        `;
+        
+        authModal.classList.add('show');
+        
+        document.getElementById('loginBtn').addEventListener('click', () => this.handleLogin());
+        document.getElementById('signupBtn').addEventListener('click', () => this.handleSignup());
+    }
+
+    handleLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!username || !password) {
+            alert('Please enter username and password');
+            return;
+        }
+        
+        const storedPassword = localStorage.getItem(`user_${username}_password`);
+        if (!storedPassword || storedPassword !== password) {
+            alert('Invalid username or password');
+            return;
+        }
+        
+        this.loginUser(username);
+    }
+
+    handleSignup() {
+        const username = document.getElementById('signupUsername').value.trim();
+        const password = document.getElementById('signupPassword').value;
+        const confirm = document.getElementById('signupConfirm').value;
+        
+        if (!username || !password || !confirm) {
+            alert('Please fill all fields');
+            return;
+        }
+        
+        if (password !== confirm) {
+            alert('Passwords do not match');
+            return;
+        }
+        
+        if (localStorage.getItem(`user_${username}_password`)) {
+            alert('Username already exists');
+            return;
+        }
+        
+        localStorage.setItem(`user_${username}_password`, password);
+        this.loginUser(username);
+    }
+
+    loginUser(username) {
+        this.currentUser = username;
+        this.isOwner = true;
+        localStorage.setItem('currentUser', username);
+        localStorage.setItem('userPassword', localStorage.getItem(`user_${username}_password`));
+        document.getElementById('authModal').classList.remove('show');
         this.init();
     }
 
+    logout() {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('userPassword');
+        this.currentUser = null;
+        this.isOwner = false;
+        this.showAuthScreen();
+        this.scripts = [];
+        this.filteredScripts = [];
+    }
+
     init() {
+        this.scripts = this.loadScripts();
+        this.filteredScripts = [...this.scripts];
         this.setupEventListeners();
         this.updateUserDisplay();
         this.renderScripts();
         this.populateCategories();
         this.loadTheme();
-    }
-
-    loadUser() {
-        return localStorage.getItem('currentUser') || 'Guest';
-    }
-
-    saveUser(username) {
-        this.currentUser = username;
-        localStorage.setItem('currentUser', username);
-        this.updateUserDisplay();
+        this.updateUIPermissions();
     }
 
     loadScripts() {
         const key = `scripts_${this.currentUser}`;
         const stored = localStorage.getItem(key);
-        return stored ? JSON.parse(stored) : defaultScripts;
+        return stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(defaultScripts));
     }
 
     saveScripts() {
@@ -58,23 +142,10 @@ class ScriptHub {
         localStorage.setItem(key, JSON.stringify(this.scripts));
     }
 
-    getAllUsers() {
-        const users = new Set();
-        for (let key in localStorage) {
-            if (key.startsWith('scripts_')) {
-                users.add(key.replace('scripts_', ''));
-            }
-        }
-        users.add(this.currentUser);
-        return Array.from(users).sort();
-    }
-
     setupEventListeners() {
         document.getElementById('editModeBtn').addEventListener('click', () => this.openEditModal());
         document.getElementById('addScriptBtn').addEventListener('click', () => this.openFormModal());
-        document.getElementById('userBtn').addEventListener('click', () => this.openUserModal());
-        document.getElementById('closeUserModal').addEventListener('click', () => this.closeUserModal());
-        document.getElementById('createUserBtn').addEventListener('click', () => this.createUser());
+        document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
         document.getElementById('searchInput').addEventListener('input', () => this.filterScripts());
         document.getElementById('categoryFilter').addEventListener('change', () => this.filterScripts());
@@ -90,58 +161,29 @@ class ScriptHub {
         document.getElementById('themeSelect').addEventListener('change', (e) => this.setTheme(e.target.value));
 
         window.addEventListener('click', (e) => {
-            const userModal = document.getElementById('userModal');
             const formModal = document.getElementById('scriptFormModal');
             const editModal = document.getElementById('editModal');
-            if (e.target === userModal) this.closeUserModal();
             if (e.target === formModal) this.closeFormModal();
             if (e.target === editModal) this.closeEditModal();
         });
     }
 
+    updateUIPermissions() {
+        const addBtn = document.getElementById('addScriptBtn');
+        const editBtn = document.getElementById('editModeBtn');
+        
+        if (this.isOwner) {
+            addBtn.style.display = 'block';
+            editBtn.style.display = 'block';
+        } else {
+            addBtn.style.display = 'none';
+            editBtn.style.display = 'none';
+        }
+    }
+
     updateUserDisplay() {
-        document.getElementById('currentUser').textContent = `👤 ${this.currentUser}`;
-    }
-
-    openUserModal() {
-        const modal = document.getElementById('userModal');
-        const userList = document.getElementById('userList');
-        const users = this.getAllUsers();
-        
-        userList.innerHTML = users.map(user => `
-            <button class="user-item ${user === this.currentUser ? 'active' : ''}" onclick="scriptHub.switchUser('${user}')">\n                ${user} ${user === this.currentUser ? '✓' : ''}
-            </button>
-        `).join('');
-        
-        modal.classList.add('show');
-    }
-
-    closeUserModal() {
-        document.getElementById('userModal').classList.remove('show');
-    }
-
-    switchUser(username) {
-        this.saveUser(username);
-        this.scripts = this.loadScripts();
-        this.filteredScripts = [...this.scripts];
-        this.renderScripts();
-        this.populateCategories();
-        this.closeUserModal();
-        this.showToast(`✓ Switched to ${username}`);
-    }
-
-    createUser() {
-        const username = document.getElementById('newUsername').value.trim();
-        if (!username) {
-            alert('Please enter a username');
-            return;
-        }
-        if (this.getAllUsers().includes(username)) {
-            alert('User already exists');
-            return;
-        }
-        this.switchUser(username);
-        document.getElementById('newUsername').value = '';
+        const userEl = document.getElementById('currentUser');
+        userEl.textContent = `${this.currentUser}${this.isOwner ? ' (Owner)' : ' (Viewer)'}`;
     }
 
     renderScripts() {
@@ -149,9 +191,9 @@ class ScriptHub {
         
         if (this.filteredScripts.length === 0) {
             grid.innerHTML = `
-                <div style="grid-column: 1 / -1;" class="empty-state">
-                    <h2>No scripts yet</h2>
-                    <p>Click ➕ Add Script to get started!</p>
+                <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                    <h2>No scripts found</h2>
+                    <p>${this.isOwner ? 'Click + Add Script to create one' : 'No scripts to display'}</p>
                 </div>
             `;
             return;
@@ -161,14 +203,16 @@ class ScriptHub {
             <div class="script-card" data-id="${script.id}">
                 <div class="script-card-header">
                     <span class="script-category">${script.category}</span>
-                    <div class="script-actions">
-                        <button class="btn-edit" onclick="scriptHub.editScript(${script.id})" title="Edit">✏️</button>
-                        <button class="btn-delete" onclick="scriptHub.deleteScript(${script.id})" title="Delete">🗑️</button>
-                    </div>
+                    ${this.isOwner ? `
+                        <div class="script-actions">
+                            <button class="btn-edit" onclick="scriptHub.editScript(${script.id})" title="Edit">✎</button>
+                            <button class="btn-delete" onclick="scriptHub.deleteScript(${script.id})" title="Delete">✕</button>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="script-title">${script.title}</div>
                 <div class="script-content" id="content-${script.id}">${this.escapeHtml(script.content)}</div>
-                <button class="btn-copy" onclick="scriptHub.copyToClipboard(${script.id}, '${script.title}')">📋 Copy</button>
+                <button class="btn-copy" onclick="scriptHub.copyToClipboard(${script.id}, '${script.title}')">Copy</button>
             </div>
         `).join('');
     }
@@ -222,14 +266,14 @@ class ScriptHub {
         if (id) {
             const script = this.scripts.find(s => s.id === id);
             if (script) {
-                title.textContent = '✏️ Edit Script';
+                title.textContent = 'Edit Script';
                 document.getElementById('scriptTitle').value = script.title;
                 document.getElementById('scriptCategory').value = script.category;
                 document.getElementById('scriptContent').value = script.content;
                 this.editingId = id;
             }
         } else {
-            title.textContent = '➕ Add New Script';
+            title.textContent = 'Add Script';
             form.reset();
             this.editingId = null;
         }
@@ -251,7 +295,7 @@ class ScriptHub {
         const content = document.getElementById('scriptContent').value.trim();
 
         if (!title || !category || !content) {
-            alert('Please fill in all fields');
+            alert('Please fill all fields');
             return;
         }
 
@@ -261,12 +305,12 @@ class ScriptHub {
                 script.title = title;
                 script.category = category;
                 script.content = content;
-                this.showToast('✓ Script updated!');
+                this.showToast('✓ Script updated');
             }
         } else {
             const newId = Math.max(...this.scripts.map(s => s.id), 0) + 1;
             this.scripts.push({ id: newId, title, category, content });
-            this.showToast('✓ Script added!');
+            this.showToast('✓ Script added');
         }
 
         this.saveScripts();
@@ -277,17 +321,25 @@ class ScriptHub {
     }
 
     editScript(id) {
+        if (!this.isOwner) {
+            alert('Only owner can edit scripts');
+            return;
+        }
         this.openFormModal(id);
     }
 
     deleteScript(id) {
+        if (!this.isOwner) {
+            alert('Only owner can delete scripts');
+            return;
+        }
         if (confirm('Delete this script?')) {
             this.scripts = this.scripts.filter(s => s.id !== id);
             this.saveScripts();
             this.filteredScripts = [...this.scripts];
             this.renderScripts();
             this.populateCategories();
-            this.showToast('✓ Script deleted!');
+            this.showToast('✓ Script deleted');
         }
     }
 
@@ -308,7 +360,7 @@ class ScriptHub {
             const newScripts = JSON.parse(editor.value);
             
             if (!Array.isArray(newScripts)) {
-                throw new Error('Must be an array');
+                throw new Error('Must be array');
             }
 
             newScripts.forEach((script, index) => {
@@ -323,7 +375,7 @@ class ScriptHub {
             this.filteredScripts = [...this.scripts];
             this.renderScripts();
             this.closeEditModal();
-            this.showToast('✓ Scripts updated!');
+            this.showToast('✓ Scripts updated');
             this.populateCategories();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -336,7 +388,7 @@ class ScriptHub {
     }
 
     loadTheme() {
-        const savedTheme = localStorage.getItem('scriptTheme') || 'neon-blue';
+        const savedTheme = localStorage.getItem('scriptTheme') || 'dark-pro';
         document.getElementById('themeSelect').value = savedTheme;
         this.setTheme(savedTheme);
     }
